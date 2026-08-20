@@ -1,42 +1,40 @@
 /* ============================================================
-   RESET
-============================================================ */
+   GLOBAL
+   ============================================================ */
 
 * {
   box-sizing: border-box;
-  margin: 0;
-  padding: 0;
 }
 
 html,
 body {
+  margin: 0;
+  padding: 0;
   width: 100%;
   min-height: 100%;
 }
 
 body {
+  background: #02070b;
+  color: #eaf7ff;
   font-family:
+    Inter,
     "Segoe UI",
     Arial,
     sans-serif;
 
-  background:
-    radial-gradient(
-      circle at top,
-      #102235 0%,
-      #07111c 45%,
-      #03080d 100%
-    );
-
-  color: #ffffff;
-
+  -webkit-font-smoothing: antialiased;
   overflow-x: hidden;
 }
 
+button,
+input {
+  font-family: inherit;
+}
 
-/* ============================================================
-   APP
-============================================================ */
+button {
+  cursor: pointer;
+}
 
 #app {
   width: 100%;
@@ -46,7 +44,7 @@ body {
 
 /* ============================================================
    CONTAINER
-============================================================ */
+   ============================================================ */
 
 .container {
   width: min(
@@ -55,111 +53,93 @@ body {
   );
 
   margin: 0 auto;
-
   padding: 30px 0 50px;
 }
 
 
 /* ============================================================
    HEADINGS
-============================================================ */
+   ============================================================ */
 
 h1 {
+  margin: 0;
   font-size: 30px;
   font-weight: 700;
-
-  margin-bottom: 8px;
+  letter-spacing: -0.5px;
 }
 
 h2 {
-  font-size: 20px;
+  margin: 0;
+  font-size: 19px;
   font-weight: 600;
 }
 
 p {
-  color: #9eb1c3;
-
-  line-height: 1.5;
+  color: #91a8b7;
 }
 
 
 /* ============================================================
    PC LIST
-============================================================ */
+   ============================================================ */
 
 .pc-list {
   display: grid;
-
-  grid-template-columns:
-    repeat(
-      auto-fit,
-      minmax(280px, 1fr)
-    );
-
-  gap: 18px;
-
-  margin-top: 30px;
+  gap: 14px;
+  margin-top: 25px;
 }
-
-
-/* ============================================================
-   PC CARD
-============================================================ */
 
 .pc-card {
   display: flex;
-
   align-items: center;
   justify-content: space-between;
 
-  gap: 20px;
-
-  padding: 22px;
-
-  border:
-    1px solid
-    rgba(0, 183, 255, 0.18);
-
-  border-radius: 16px;
+  padding: 20px;
 
   background:
     linear-gradient(
       145deg,
-      rgba(16, 34, 51, 0.95),
-      rgba(6, 15, 24, 0.95)
+      rgba(8, 24, 34, 0.96),
+      rgba(3, 12, 18, 0.96)
     );
 
-  cursor: pointer;
+  border: 1px solid
+    rgba(0, 183, 255, 0.18);
+
+  border-radius: 15px;
 
   transition:
-    transform 0.2s ease,
-    border-color 0.2s ease,
-    box-shadow 0.2s ease;
+    transform 0.18s ease,
+    border-color 0.18s ease,
+    box-shadow 0.18s ease;
 }
 
 .pc-card:hover {
-  transform: translateY(-3px);
+  transform: translateY(-2px);
 
   border-color:
-    rgba(0, 183, 255, 0.55);
+    rgba(0, 183, 255, 0.5);
 
   box-shadow:
     0 0 25px
-    rgba(0, 183, 255, 0.12);
+    rgba(0, 183, 255, 0.1);
+}
+
+.pc-card p {
+  margin:
+    7px 0 0;
 }
 
 
 /* ============================================================
    STATUS
-============================================================ */
+   ============================================================ */
 
 .status {
   display: inline-flex;
-
   align-items: center;
-  justify-content: center;
 
-  padding: 6px 10px;
+  padding: 7px 11px;
 
   border-radius: 999px;
 
@@ -168,35 +148,32 @@ p {
 }
 
 .status.online {
-  color: #55ff9b;
+  color: #69ffb0;
 
   background:
-    rgba(40, 255, 130, 0.1);
+    rgba(0, 255, 140, 0.09);
 
-  border:
-    1px solid
-    rgba(40, 255, 130, 0.25);
+  border: 1px solid
+    rgba(0, 255, 140, 0.2);
 }
 
 .status.offline {
-  color: #ff6b6b;
+  color: #ff7676;
 
   background:
-    rgba(255, 70, 70, 0.1);
+    rgba(255, 70, 70, 0.09);
 
-  border:
-    1px solid
-    rgba(255, 70, 70, 0.25);
+  border: 1px solid
+    rgba(255, 70, 70, 0.2);
 }
 
 
 /* ============================================================
    SCREEN HEADER
-============================================================ */
+   ============================================================ */
 
 .screen-header {
   display: flex;
-
   align-items: center;
   justify-content: space-between;
 
@@ -205,116 +182,86 @@ p {
   margin-bottom: 20px;
 }
 
+.screen-header p {
+  margin: 6px 0 0;
+}
+
 .live-status {
-  color: #55ff9b;
-
-  font-size: 14px;
-  font-weight: 700;
-
   white-space: nowrap;
+
+  padding: 8px 12px;
+
+  border-radius: 999px;
+
+  background:
+    rgba(0, 183, 255, 0.08);
+
+  border: 1px solid
+    rgba(0, 183, 255, 0.18);
+
+  font-size: 12px;
+  font-weight: 600;
 }
 
 
 /* ============================================================
    CONTROLS
-============================================================ */
+   ============================================================ */
 
 .controls {
-  display: grid;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
 
-  grid-template-columns:
-    repeat(
-      auto-fit,
-      minmax(150px, 1fr)
-    );
-
-  gap: 12px;
-
-  margin: 25px 0;
+  margin: 20px 0;
 }
 
-
-/* ============================================================
-   BUTTON
-============================================================ */
-
-button {
-  border: none;
-
-  color: #ffffff;
+.controls button,
+.back-button {
+  border: 1px solid
+    rgba(0, 183, 255, 0.25);
 
   background:
-    linear-gradient(
-      135deg,
-      #087db5,
-      #00527d
-    );
+    rgba(5, 25, 35, 0.95);
 
-  padding: 12px 16px;
+  color: #eaf7ff;
+
+  padding: 11px 16px;
 
   border-radius: 10px;
 
   font-size: 14px;
-  font-weight: 600;
-
-  cursor: pointer;
 
   transition:
-    transform 0.15s ease,
-    opacity 0.15s ease,
-    box-shadow 0.15s ease;
+    background 0.15s ease,
+    border-color 0.15s ease,
+    transform 0.15s ease;
 }
 
-button:hover {
-  opacity: 0.9;
+.controls button:hover,
+.back-button:hover {
+  background:
+    rgba(0, 183, 255, 0.1);
 
-  box-shadow:
-    0 0 16px
-    rgba(0, 183, 255, 0.18);
+  border-color:
+    rgba(0, 183, 255, 0.55);
+
+  transform: translateY(-1px);
 }
-
-button:active {
-  transform: scale(0.97);
-}
-
-
-/* ============================================================
-   BACK BUTTON
-============================================================ */
 
 .back-button {
   margin-top: 20px;
-
-  background:
-    rgba(255, 255, 255, 0.07);
-
-  border:
-    1px solid
-    rgba(255, 255, 255, 0.12);
 }
 
 
 /* ============================================================
-   SCREEN PAGE
-============================================================ */
-
-.screen-page {
-  width: min(
-    1400px,
-    calc(100% - 24px)
-  );
-}
-
-
-/* ============================================================
-   LIVE SCREEN BOX
-============================================================ */
+   SCREEN BOX
+   ============================================================ */
 
 .screen-box {
   position: relative;
 
   width: 100%;
-
   min-height: 300px;
 
   display: flex;
@@ -340,14 +287,14 @@ button:active {
   touch-action: none;
 
   user-select: none;
-
   -webkit-user-select: none;
+  -webkit-touch-callout: none;
 }
 
 
 /* ============================================================
    LIVE SCREEN
-============================================================ */
+   ============================================================ */
 
 #live-screen {
   display: none;
@@ -362,9 +309,7 @@ button:active {
   pointer-events: auto;
 
   user-select: none;
-
   -webkit-user-select: none;
-
   -webkit-touch-callout: none;
 
   touch-action: none;
@@ -373,7 +318,7 @@ button:active {
 
 /* ============================================================
    SCREEN LOADING
-============================================================ */
+   ============================================================ */
 
 #screen-loading {
   position: absolute;
@@ -387,32 +332,27 @@ button:active {
   align-items: center;
   justify-content: center;
 
-  gap: 14px;
+  gap: 15px;
 
-  color: #9eb1c3;
+  color: #8da8b8;
 
   font-size: 14px;
 
   z-index: 5;
 }
 
-
-/* ============================================================
-   LOADER
-============================================================ */
-
 .loader {
-  width: 38px;
-  height: 38px;
+  width: 35px;
+  height: 35px;
+
+  border-radius: 50%;
 
   border:
     3px solid
-    rgba(255, 255, 255, 0.12);
+    rgba(0, 183, 255, 0.15);
 
   border-top-color:
     #00b7ff;
-
-  border-radius: 50%;
 
   animation:
     spin 0.8s linear infinite;
@@ -424,246 +364,186 @@ button:active {
   }
 }
 
-
-/* ============================================================
-   ERROR
-============================================================ */
-
 .error-icon {
-  font-size: 30px;
+  font-size: 28px;
 }
 
 
 /* ============================================================
    VIRTUAL CURSOR
-============================================================ */
+   ============================================================ */
 
 #virtual-cursor {
   position: absolute;
 
-  left: 50%;
-  top: 50%;
-
-  width: 34px;
-  height: 34px;
+  width: 32px;
+  height: 32px;
 
   transform:
     translate(-50%, -50%);
 
   pointer-events: none;
 
-  z-index: 50;
+  z-index: 20;
 
-  display: block;
+  display: flex;
 
-  filter:
-    drop-shadow(
-      0 0 5px
-      rgba(0, 183, 255, 0.8)
-    );
-
-  transition:
-    left 0.04s linear,
-    top 0.04s linear;
+  align-items: center;
+  justify-content: center;
 }
 
 
-/* ============================================================
-   CURSOR DOT
-============================================================ */
+/* Cursor center */
 
 .cursor-dot {
   position: absolute;
 
-  left: 50%;
-  top: 50%;
-
   width: 8px;
   height: 8px;
 
-  transform:
-    translate(-50%, -50%);
-
-  background:
-    #00b7ff;
-
-  border:
-    2px solid
-    #ffffff;
-
   border-radius: 50%;
 
-  box-shadow:
-    0 0 6px
-    #00b7ff,
+  background: #00b7ff;
 
-    0 0 14px
+  box-shadow:
+    0 0 8px #00b7ff,
+    0 0 18px
     rgba(0, 183, 255, 0.8);
 }
 
 
-/* ============================================================
-   CURSOR RING
-============================================================ */
+/* Cursor ring */
 
 .cursor-ring {
   position: absolute;
 
-  left: 50%;
-  top: 50%;
-
-  width: 26px;
-  height: 26px;
-
-  transform:
-    translate(-50%, -50%);
-
-  border:
-    2px solid
-    #00b7ff;
+  width: 27px;
+  height: 27px;
 
   border-radius: 50%;
 
-  opacity: 0.9;
+  border:
+    2px solid
+    rgba(0, 183, 255, 0.9);
+
+  box-shadow:
+    0 0 10px
+    rgba(0, 183, 255, 0.55);
+
+  animation:
+    cursorPulse 1.3s ease-in-out infinite;
+}
+
+@keyframes cursorPulse {
+
+  0%,
+  100% {
+    transform: scale(0.9);
+    opacity: 0.65;
+  }
+
+  50% {
+    transform: scale(1.08);
+    opacity: 1;
+  }
 }
 
 
 /* ============================================================
-   CURSOR CROSSHAIR
-============================================================ */
-
-#virtual-cursor::before {
-  content: "";
-
-  position: absolute;
-
-  left: 50%;
-  top: 0;
-
-  width: 2px;
-  height: 34px;
-
-  transform:
-    translateX(-50%);
-
-  background:
-    #00b7ff;
-
-  opacity: 0.85;
-}
-
-#virtual-cursor::after {
-  content: "";
-
-  position: absolute;
-
-  left: 0;
-  top: 50%;
-
-  width: 34px;
-  height: 2px;
-
-  transform:
-    translateY(-50%);
-
-  background:
-    #00b7ff;
-
-  opacity: 0.85;
-}
-
-
-/* ============================================================
-   VIRTUAL MOUSE PANEL
-============================================================ */
+   VIRTUAL MOUSE SECTION
+   ============================================================ */
 
 .virtual-mouse {
-  margin-top: 20px;
+  margin-top: 18px;
 
   padding: 18px;
 
+  background:
+    linear-gradient(
+      145deg,
+      rgba(7, 24, 34, 0.95),
+      rgba(3, 12, 18, 0.95)
+    );
+
   border:
     1px solid
-    rgba(0, 183, 255, 0.15);
+    rgba(0, 183, 255, 0.18);
 
-  border-radius: 16px;
-
-  background:
-    rgba(8, 20, 31, 0.85);
+  border-radius: 15px;
 }
-
-
-/* ============================================================
-   VIRTUAL TITLE
-============================================================ */
 
 .virtual-title {
   font-size: 16px;
-
   font-weight: 700;
 
-  margin-bottom: 8px;
+  margin-bottom: 7px;
 }
 
-
-/* ============================================================
-   MOUSE INFO
-============================================================ */
-
 .mouse-info {
-  color: #8ea3b7;
+  color: #849eae;
 
   font-size: 13px;
-
   line-height: 1.5;
 
-  margin-bottom: 14px;
+  margin-bottom: 15px;
 }
 
 
 /* ============================================================
    MOUSE BUTTONS
-============================================================ */
+   ============================================================ */
 
 .mouse-buttons {
   display: grid;
 
   grid-template-columns:
-    repeat(
-      auto-fit,
-      minmax(150px, 1fr)
-    );
+    repeat(4, minmax(0, 1fr));
 
   gap: 10px;
 }
 
-
-/* ============================================================
-   MOUSE BUTTON
-============================================================ */
-
 .mouse-button {
   min-height: 46px;
 
-  padding: 12px;
+  border:
+    1px solid
+    rgba(0, 183, 255, 0.22);
+
+  border-radius: 10px;
 
   background:
-    linear-gradient(
-      135deg,
-      #0a789f,
-      #075272
-    );
+    rgba(0, 183, 255, 0.06);
+
+  color: #dff5ff;
+
+  font-size: 13px;
+
+  transition:
+    background 0.15s ease,
+    border-color 0.15s ease,
+    transform 0.1s ease;
+}
+
+.mouse-button:hover {
+  background:
+    rgba(0, 183, 255, 0.13);
+
+  border-color:
+    rgba(0, 183, 255, 0.5);
+}
+
+.mouse-button:active {
+  transform: scale(0.97);
 }
 
 
 /* ============================================================
    TOUCHPAD
-============================================================ */
+   ============================================================ */
 
 .virtual-touchpad {
   width: 100%;
-
-  min-height: 180px;
+  min-height: 190px;
 
   display: flex;
 
@@ -672,59 +552,55 @@ button:active {
   align-items: center;
   justify-content: center;
 
-  gap: 12px;
+  gap: 10px;
 
   border:
     1px solid
     rgba(0, 183, 255, 0.18);
 
-  border-radius: 14px;
+  border-radius: 15px;
 
   background:
-    linear-gradient(
-      145deg,
-      rgba(15, 36, 52, 0.9),
-      rgba(4, 13, 21, 0.95)
+    radial-gradient(
+      circle at center,
+      rgba(0, 183, 255, 0.08),
+      rgba(0, 0, 0, 0.15)
     );
 
-  color: #91a9bc;
+  color: #7793a4;
+
+  font-size: 13px;
 
   user-select: none;
-
   -webkit-user-select: none;
 
   touch-action: none;
+}
 
-  cursor: crosshair;
+.touchpad-icon {
+  font-size: 35px;
+
+  opacity: 0.75;
 }
 
 .virtual-touchpad:active {
   border-color:
-    rgba(0, 183, 255, 0.5);
+    rgba(0, 183, 255, 0.55);
 
   background:
-    rgba(0, 100, 150, 0.15);
-}
-
-
-/* ============================================================
-   TOUCHPAD ICON
-============================================================ */
-
-.touchpad-icon {
-  font-size: 32px;
+    rgba(0, 183, 255, 0.08);
 }
 
 
 /* ============================================================
    SCROLL BUTTONS
-============================================================ */
+   ============================================================ */
 
 .scroll-buttons {
   display: grid;
 
   grid-template-columns:
-    1fr 1fr;
+    repeat(2, 1fr);
 
   gap: 10px;
 
@@ -734,27 +610,26 @@ button:active {
 
 /* ============================================================
    KEYBOARD
-============================================================ */
+   ============================================================ */
 
 .virtual-keyboard {
-  margin-top: 20px;
+  margin-top: 18px;
 
   padding: 18px;
 
+  background:
+    linear-gradient(
+      145deg,
+      rgba(7, 24, 34, 0.95),
+      rgba(3, 12, 18, 0.95)
+    );
+
   border:
     1px solid
-    rgba(0, 183, 255, 0.15);
+    rgba(0, 183, 255, 0.18);
 
-  border-radius: 16px;
-
-  background:
-    rgba(8, 20, 31, 0.85);
+  border-radius: 15px;
 }
-
-
-/* ============================================================
-   KEYBOARD INPUT
-============================================================ */
 
 #keyboard-input {
   width: 100%;
@@ -763,12 +638,7 @@ button:active {
 
   padding: 12px 14px;
 
-  margin-bottom: 12px;
-
-  color: #ffffff;
-
-  background:
-    rgba(0, 0, 0, 0.35);
+  outline: none;
 
   border:
     1px solid
@@ -776,59 +646,58 @@ button:active {
 
   border-radius: 10px;
 
-  outline: none;
+  background:
+    rgba(0, 0, 0, 0.3);
 
-  font-size: 15px;
+  color: #eaf7ff;
+
+  font-size: 14px;
+}
+
+#keyboard-input::placeholder {
+  color: #607987;
 }
 
 #keyboard-input:focus {
   border-color:
-    #00b7ff;
+    rgba(0, 183, 255, 0.6);
 
   box-shadow:
-    0 0 12px
-    rgba(0, 183, 255, 0.15);
-}
-
-#keyboard-input::placeholder {
-  color: #657b8e;
+    0 0 15px
+    rgba(0, 183, 255, 0.08);
 }
 
 
 /* ============================================================
    KEYBOARD ROW
-============================================================ */
+   ============================================================ */
 
 .keyboard-row {
   display: grid;
 
   grid-template-columns:
-    repeat(
-      auto-fit,
-      minmax(90px, 1fr)
-    );
+    repeat(4, 1fr);
 
   gap: 8px;
 
   margin-top: 8px;
 }
 
-
-/* ============================================================
-   KEYBOARD BUTTON
-============================================================ */
-
 .keyboard-row button {
   min-height: 42px;
 
-  background:
-    rgba(255, 255, 255, 0.07);
-
   border:
     1px solid
-    rgba(255, 255, 255, 0.1);
+    rgba(0, 183, 255, 0.18);
 
-  color: #dbe9f3;
+  border-radius: 9px;
+
+  background:
+    rgba(0, 183, 255, 0.05);
+
+  color: #cfeefa;
+
+  font-size: 13px;
 }
 
 .keyboard-row button:hover {
@@ -836,13 +705,17 @@ button:active {
     rgba(0, 183, 255, 0.12);
 
   border-color:
-    rgba(0, 183, 255, 0.35);
+    rgba(0, 183, 255, 0.45);
+}
+
+.keyboard-row button:active {
+  transform: scale(0.97);
 }
 
 
 /* ============================================================
    MOBILE
-============================================================ */
+   ============================================================ */
 
 @media (max-width: 700px) {
 
@@ -850,23 +723,37 @@ button:active {
     width:
       calc(100% - 20px);
 
-    padding-top: 20px;
+    padding:
+      20px 0 35px;
   }
-
 
   h1 {
     font-size: 24px;
   }
 
-
   .screen-header {
     align-items: flex-start;
-
-    flex-direction: column;
-
-    gap: 8px;
   }
 
+  .screen-header h1 {
+    font-size: 22px;
+  }
+
+  .pc-card {
+    padding: 16px;
+  }
+
+  .controls {
+    display: grid;
+
+    grid-template-columns:
+      repeat(2, 1fr);
+  }
+
+  .controls button:last-child {
+    grid-column:
+      1 / -1;
+  }
 
   .screen-box {
     min-height: 220px;
@@ -874,140 +761,82 @@ button:active {
     border-radius: 12px;
   }
 
-
-  .virtual-mouse {
-    padding: 14px;
-
-    border-radius: 14px;
-  }
-
-
   .mouse-buttons {
     grid-template-columns:
-      1fr 1fr;
+      repeat(2, 1fr);
   }
-
-
-  .mouse-button {
-    min-height: 48px;
-
-    padding: 10px 8px;
-
-    font-size: 12px;
-  }
-
-
-  .virtual-touchpad {
-    min-height: 150px;
-  }
-
 
   .keyboard-row {
     grid-template-columns:
       repeat(2, 1fr);
   }
 
-
-  .pc-card {
-    padding: 17px;
+  .virtual-touchpad {
+    min-height: 170px;
   }
 
 }
 
 
 /* ============================================================
-   SMALL PHONE
-============================================================ */
+   SMALL MOBILE
+   ============================================================ */
 
 @media (max-width: 420px) {
 
   .container {
     width:
-      calc(100% - 14px);
+      calc(100% - 16px);
 
-    padding-top: 14px;
+    padding-top: 16px;
   }
 
-
-  .pc-list {
-    margin-top: 20px;
+  .screen-header {
+    flex-direction: column;
   }
 
-
-  .pc-card {
-    border-radius: 12px;
+  .live-status {
+    align-self: flex-start;
   }
 
+  .controls {
+    grid-template-columns:
+      1fr;
+  }
+
+  .controls button:last-child {
+    grid-column: auto;
+  }
 
   .mouse-buttons {
     grid-template-columns:
       1fr;
   }
 
-
   .scroll-buttons {
     grid-template-columns:
       1fr;
   }
 
-
   .virtual-touchpad {
-    min-height: 135px;
-  }
-
-
-  #virtual-cursor {
-    width: 30px;
-    height: 30px;
-  }
-
-
-  #virtual-cursor::before {
-    height: 30px;
-  }
-
-
-  #virtual-cursor::after {
-    width: 30px;
+    min-height: 150px;
   }
 
 }
 
 
 /* ============================================================
-   PREVENT TEXT SELECTION ON REMOTE CONTROLS
-============================================================ */
+   DISABLE TEXT SELECTION ON REMOTE CONTROLS
+   ============================================================ */
 
-.screen-page,
 .screen-box,
 .virtual-mouse,
 .virtual-keyboard {
-  -webkit-tap-highlight-color:
-    transparent;
+  -webkit-user-select: none;
+  user-select: none;
 }
 
-
-/* ============================================================
-   SCROLLBAR
-============================================================ */
-
-::-webkit-scrollbar {
-  width: 8px;
-}
-
-::-webkit-scrollbar-track {
-  background:
-    #03080d;
-}
-
-::-webkit-scrollbar-thumb {
-  background:
-    #16445e;
-
-  border-radius: 10px;
-}
-
-::-webkit-scrollbar-thumb:hover {
-  background:
-    #1b668d;
+#keyboard-input {
+  -webkit-user-select: text;
+  user-select: text;
 }
