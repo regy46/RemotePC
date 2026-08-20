@@ -1,240 +1,211 @@
-import { createClient } from '@supabase/supabase-js'
-import './style.css'
+import { createClient } from "@supabase/supabase-js";
+import "./style.css";
 
-
-// ==============================
-// SUPABASE
-// ==============================
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+const supabaseKey = import.meta.env.VITE_SUPABASE_KEY;
 
 const supabase = createClient(
-  import.meta.env.VITE_SUPABASE_URL,
-  import.meta.env.VITE_SUPABASE_KEY
-)
+  supabaseUrl,
+  supabaseKey
+);
+
+let isOnPCPage = false;
+
+const app = document.querySelector("#app");
 
 
-let isOnPCPage = false
+// ============================================================
+// CHECK PAGE
+// ============================================================
 
-
-// ==============================
-// AWAL
-// ==============================
-
-document.querySelector('#app').innerHTML = `
-
-  <div class="container">
-
-    <h1>Remote PC</h1>
-
-    <p>Mengambil daftar PC...</p>
-
-  </div>
-
-`
-
-
-// ==============================
-// STATUS PC
-// ==============================
-
-function getPCStatus(pc) {
-
-  if (pc.status === 'online') {
-
-    return {
-      text: 'online',
-      icon: '🟢'
-    }
-
-  }
-
-  return {
-    text: 'offline',
-    icon: '🔴'
-  }
-
+function isPCPage() {
+  return isOnPCPage;
 }
 
 
-// ==============================
+// ============================================================
+// INITIAL PAGE
+// ============================================================
+
+app.innerHTML = `
+  <div class="container">
+    <h1>Remote PC</h1>
+    <p>Pilih PC yang ingin dikendalikan.</p>
+
+    <div id="pc-list" class="pc-list">
+      <p>Memuat PC...</p>
+    </div>
+  </div>
+`;
+
+
+// ============================================================
+// GET PC STATUS
+// ============================================================
+
+async function getPCStatus(deviceId) {
+
+  const { data, error } = await supabase
+    .from("devices")
+    .select("*")
+    .eq("device_id", deviceId)
+    .single();
+
+  if (error) {
+    console.error(error);
+    return null;
+  }
+
+  return data;
+}
+
+
+// ============================================================
 // LOAD PC
-// ==============================
+// ============================================================
 
 async function loadPCs() {
 
-  if (isOnPCPage) {
-    return
+  if (isPCPage()) {
+    return;
   }
 
+  const pcList = document.querySelector("#pc-list");
 
-  const {
-    data,
-    error
-  } = await supabase
+  if (!pcList) {
+    return;
+  }
 
-    .from('devices')
-
-    .select('*')
-
-    .order(
-      'pc_name'
-    )
-
+  const { data, error } = await supabase
+    .from("devices")
+    .select("*")
+    .order("pc_name", {
+      ascending: true
+    });
 
   if (error) {
 
-    document.querySelector('#app').innerHTML = `
+    console.error(error);
 
-      <div class="container">
+    pcList.innerHTML = `
+      <p>Gagal mengambil daftar PC.</p>
+    `;
 
-        <h1>Remote PC</h1>
-
-        <p>
-          ❌ Gagal mengambil data PC
-        </p>
-
-        <pre>${error.message}</pre>
-
-      </div>
-
-    `
-
-    return
-
+    return;
   }
 
+  if (!data || data.length === 0) {
 
-  const pcs = data.map(pc => {
+    pcList.innerHTML = `
+      <p>Belum ada PC yang terhubung.</p>
+    `;
 
-    const status =
-      getPCStatus(pc)
+    return;
+  }
+
+  pcList.innerHTML = "";
+
+  data.forEach((pc) => {
+
+    const card = document.createElement("div");
+
+    card.className = "pc-card";
+
+    const isOnline = pc.status === "online";
+
+    card.innerHTML = `
+      <div>
+        <h2>${pc.pc_name || "PC Tanpa Nama"}</h2>
+
+        <p>
+          ${pc.os || "Windows"}
+        </p>
+      </div>
+
+      <div>
+        <span class="status ${isOnline ? "online" : "offline"}">
+          ${isOnline ? "ONLINE" : "OFFLINE"}
+        </span>
+      </div>
+    `;
+
+    card.style.cursor = "pointer";
+
+    card.addEventListener("click", () => {
+      openPC(pc.device_id);
+    });
+
+    pcList.appendChild(card);
+  });
+}
 
 
-    return `
+// ============================================================
+// OPEN PC
+// ============================================================
 
-      <div
-        class="pc-card"
-        onclick="openPC('${pc.device_id}')"
-      >
+window.openPC = async function (deviceId) {
+
+  isOnPCPage = true;
+
+  const pc = await getPCStatus(deviceId);
+
+  if (!pc) {
+
+    app.innerHTML = `
+      <div class="container">
+
+        <h1>PC tidak ditemukan</h1>
+
+        <button
+          class="back-button"
+          onclick="backToPCList()"
+        >
+          ← Kembali
+        </button>
+
+      </div>
+    `;
+
+    return;
+  }
+
+  const isOnline = pc.status === "online";
+
+  app.innerHTML = `
+    <div class="container">
+
+      <div class="screen-header">
 
         <div>
-
-          <h2>
-            ${pc.pc_name}
-          </h2>
+          <h1>${pc.pc_name}</h1>
 
           <p>
-            ${pc.os}
+            ${pc.os || "Windows"}
           </p>
-
         </div>
 
-
-        <span
-          class="status ${status.text}"
-        >
-
-          ${status.icon}
-          ${status.text}
-
+        <span class="live-status">
+          ${isOnline ? "🟢 ONLINE" : "🔴 OFFLINE"}
         </span>
 
       </div>
 
-    `
-
-  }).join('')
-
-
-  document.querySelector('#app').innerHTML = `
-
-    <div class="container">
-
-      <h1>
-        Remote PC
-      </h1>
-
-
-      <p>
-        PC yang terhubung
-      </p>
-
-
-      <div class="pc-list">
-
-        ${
-          pcs ||
-          '<p>Belum ada PC.</p>'
-        }
-
-      </div>
-
-    </div>
-
-  `
-
-}
-
-
-// ==============================
-// BUKA PC
-// ==============================
-
-window.openPC = function (deviceId) {
-
-  isOnPCPage = true
-
-
-  document.querySelector('#app').innerHTML = `
-
-    <div class="container">
-
-      <h1>
-        Remote PC
-      </h1>
-
-
-      <div class="pc-card">
-
-        <div>
-
-          <h2>
-            PC Terpilih
-          </h2>
-
-
-          <p>
-            ID: ${deviceId}
-          </p>
-
-        </div>
-
-      </div>
-
-
       <div class="controls">
 
-        <button
-          onclick="pingPC('${deviceId}')"
-        >
-          🏓 Ping PC
+        <button onclick="pingPC('${deviceId}')">
+          📡 Ping
         </button>
 
-
-        <button
-          onclick="viewScreen('${deviceId}')"
-        >
+        <button onclick="viewScreen('${deviceId}')">
           🖥️ Lihat Layar
         </button>
 
-
-        <button
-          onclick="shutdownPC('${deviceId}')"
-        >
+        <button onclick="shutdownPC('${deviceId}')">
           ⏻ Shutdown
         </button>
 
       </div>
-
 
       <button
         class="back-button"
@@ -244,186 +215,160 @@ window.openPC = function (deviceId) {
       </button>
 
     </div>
-
-  `
-
-}
+  `;
+};
 
 
-// ==============================
-// KEMBALI
-// ==============================
+// ============================================================
+// BACK TO PC LIST
+// ============================================================
 
 window.backToPCList = function () {
 
-  isOnPCPage = false
+  isOnPCPage = false;
 
-  loadPCs()
+  app.innerHTML = `
+    <div class="container">
 
+      <h1>Remote PC</h1>
+
+      <p>Pilih PC yang ingin dikendalikan.</p>
+
+      <div id="pc-list" class="pc-list">
+        <p>Memuat PC...</p>
+      </div>
+
+    </div>
+  `;
+
+  loadPCs();
+};
+
+
+// ============================================================
+// SEND COMMAND
+// ============================================================
+
+async function sendCommand(deviceId, command) {
+
+  const { error } = await supabase
+    .from("commands")
+    .insert({
+      device_id: deviceId,
+      command: command
+    });
+
+  if (error) {
+
+    console.error("Command error:", error);
+
+    alert("Gagal mengirim command.");
+
+    return false;
+  }
+
+  return true;
 }
 
 
-// ==============================
-// PING PC
-// ==============================
+// ============================================================
+// PING
+// ============================================================
 
 window.pingPC = async function (deviceId) {
 
-  const {
-    error
-  } = await supabase
+  const success = await sendCommand(
+    deviceId,
+    "ping"
+  );
 
-    .from('commands')
-
-    .insert({
-
-      device_id: deviceId,
-
-      command: 'ping',
-
-      status: 'pending'
-
-    })
-
-
-  if (error) {
-
-    alert(
-      '❌ Gagal mengirim ping:\n\n' +
-      error.message
-    )
-
-    return
-
+  if (success) {
+    alert("📡 Ping command terkirim.");
   }
+};
 
 
-  alert(
-    '🏓 Ping berhasil dikirim!'
-  )
-
-}
-
-
-// ==============================
-// KIRIM COMMAND
-// ==============================
-
-async function sendCommand(
-  deviceId,
-  command
-) {
-
-  const {
-    error
-  } = await supabase
-
-    .from('commands')
-
-    .insert({
-
-      device_id: deviceId,
-
-      command: command,
-
-      status: 'pending'
-
-    })
-
-
-  if (error) {
-
-    console.error(
-      '❌ Gagal mengirim command:',
-      error
-    )
-
-    return false
-
-  }
-
-
-  return true
-
-}
-
-
-// ==============================
-// LIHAT LAYAR
-// ==============================
+// ============================================================
+// LIVE SCREEN
+// ============================================================
 
 window.viewScreen = async function (deviceId) {
 
-  document.querySelector('#app').innerHTML = `
+  isOnPCPage = true;
 
-    <div
-      class="container screen-page"
-    >
+  const pc = await getPCStatus(deviceId);
 
+  if (!pc) {
+    return;
+  }
 
-      <div
-        class="screen-header"
-      >
+  app.innerHTML = `
+    <div class="container screen-page">
+
+      <div class="screen-header">
 
         <div>
-
-          <h1>
-            🖥️ Lihat Layar
-          </h1>
-
+          <h1>🖥️ Remote Screen</h1>
 
           <p>
-            Menampilkan layar PC secara langsung
+            ${pc.pc_name}
           </p>
-
         </div>
 
-
         <span
+          id="live-status"
           class="live-status"
         >
-          🟡 CONNECTING
+          🔄 Menghubungkan...
         </span>
 
       </div>
 
 
+      <!-- SCREEN -->
+
       <div
+        id="screen-box"
         class="screen-box"
       >
 
-        <div
-          id="screen-loading"
-        >
+        <div id="screen-loading">
 
-          <div
-            class="loader"
-          ></div>
+          <div class="loader"></div>
 
-
-          <p>
-            Mengambil alamat PC...
-          </p>
+          <div>
+            Menghubungkan ke layar PC...
+          </div>
 
         </div>
 
-
         <img
           id="live-screen"
-          alt="Layar PC"
+          alt="Live Screen"
+        />
+
+        <!-- VIRTUAL CURSOR -->
+
+        <div
+          id="virtual-cursor"
+          aria-hidden="true"
         >
+
+          <div class="cursor-dot"></div>
+
+          <div class="cursor-ring"></div>
+
+        </div>
 
       </div>
 
 
-      <!-- ========================= -->
-      <!-- MOUSE VIRTUAL -->
-      <!-- ========================= -->
+      <!-- VIRTUAL MOUSE -->
 
       <div class="virtual-mouse">
 
         <div class="virtual-title">
-          🖱️ Mouse Virtual
+          🖱️ Virtual Mouse
         </div>
 
 
@@ -437,45 +382,42 @@ window.viewScreen = async function (deviceId) {
           </div>
 
           <div>
-            Geser jari untuk menggerakkan mouse
+            Geser untuk menggerakkan mouse
           </div>
 
+          <small>
+            Posisi mouse ditunjukkan oleh indikator biru
+          </small>
+
         </div>
 
 
         <div class="mouse-buttons">
 
           <button
+            class="mouse-button"
             id="left-click"
-            class="mouse-button"
           >
-            👈 Klik Kiri
+            🖱️ Klik Kiri
           </button>
 
-
           <button
+            class="mouse-button"
             id="right-click"
-            class="mouse-button"
           >
-            👉 Klik Kanan
+            🖱️ Klik Kanan
           </button>
 
-        </div>
-
-
-        <div class="mouse-buttons">
-
           <button
+            class="mouse-button"
             id="double-click"
-            class="mouse-button"
           >
-            👆 Double Click
+            🖱️ Double Click
           </button>
 
-
           <button
-            id="middle-click"
             class="mouse-button"
+            id="middle-click"
           >
             🖱️ Klik Tengah
           </button>
@@ -486,142 +428,116 @@ window.viewScreen = async function (deviceId) {
         <div class="scroll-buttons">
 
           <button
-            id="scroll-up"
             class="mouse-button"
+            id="scroll-up"
           >
-            🔼 Scroll Atas
+            ⬆️ Scroll Atas
           </button>
 
-
           <button
-            id="scroll-down"
             class="mouse-button"
+            id="scroll-down"
           >
-            🔽 Scroll Bawah
+            ⬇️ Scroll Bawah
+          </button>
+
+        </div>
+
+      </div>
+
+
+      <!-- KEYBOARD -->
+
+      <div class="virtual-keyboard">
+
+        <input
+          id="keyboard-input"
+          type="text"
+          placeholder="Ketik teks untuk dikirim ke PC..."
+          autocomplete="off"
+        />
+
+
+        <div class="keyboard-row">
+
+          <button data-key="ENTER">
+            Enter
+          </button>
+
+          <button data-key="BACKSPACE">
+            Backspace
+          </button>
+
+          <button data-key="TAB">
+            Tab
+          </button>
+
+          <button data-key="ESC">
+            Esc
           </button>
 
         </div>
 
 
-        <!-- ========================= -->
-        <!-- KEYBOARD -->
-        <!-- ========================= -->
+        <div class="keyboard-row">
 
-        <div class="virtual-keyboard">
+          <button data-key="UP">
+            ↑
+          </button>
 
-          <div class="virtual-title">
-            ⌨️ Keyboard Virtual
-          </div>
+          <button data-key="DOWN">
+            ↓
+          </button>
 
+          <button data-key="LEFT">
+            ←
+          </button>
 
-          <input
-            id="keyboard-input"
-            type="text"
-            placeholder="Ketik teks di sini..."
-            autocomplete="off"
-            autocorrect="off"
-            autocapitalize="off"
-            spellcheck="false"
-          />
+          <button data-key="RIGHT">
+            →
+          </button>
 
-
-          <div class="keyboard-row">
-
-            <button
-              data-key="esc"
-            >
-              Esc
-            </button>
-
-            <button
-              data-key="tab"
-            >
-              Tab
-            </button>
-
-            <button
-              data-key="backspace"
-            >
-              ⌫
-            </button>
-
-            <button
-              data-key="enter"
-            >
-              Enter
-            </button>
-
-          </div>
+        </div>
 
 
-          <div class="keyboard-row">
+        <div class="keyboard-row">
 
-            <button
-              data-key="space"
-              class="space-key"
-            >
-              Space
-            </button>
+          <button data-key="CTRL">
+            Ctrl
+          </button>
 
-          </div>
+          <button data-key="ALT">
+            Alt
+          </button>
 
+          <button data-key="SHIFT">
+            Shift
+          </button>
 
-          <div class="keyboard-row">
+          <button data-key="SPACE">
+            Space
+          </button>
 
-            <button
-              data-key="arrowleft"
-            >
-              ←
-            </button>
-
-            <button
-              data-key="arrowup"
-            >
-              ↑
-            </button>
-
-            <button
-              data-key="arrowdown"
-            >
-              ↓
-            </button>
-
-            <button
-              data-key="arrowright"
-            >
-              →
-            </button>
-
-          </div>
+        </div>
 
 
-          <div class="keyboard-row">
+        <div class="keyboard-row">
 
-            <button
-              data-key="ctrl"
-            >
-              Ctrl
-            </button>
+          <button data-key="F1">
+            F1
+          </button>
 
-            <button
-              data-key="shift"
-            >
-              Shift
-            </button>
+          <button data-key="F2">
+            F2
+          </button>
 
-            <button
-              data-key="alt"
-            >
-              Alt
-            </button>
+          <button data-key="F5">
+            F5
+          </button>
 
-            <button
-              data-key="delete"
-            >
-              Del
-            </button>
-
-          </div>
+          <button data-key="F11">
+            F11
+          </button>
 
         </div>
 
@@ -630,729 +546,803 @@ window.viewScreen = async function (deviceId) {
 
       <button
         class="back-button"
-        onclick="openPC('${deviceId}')"
+        id="back-screen"
       >
         ← Kembali
       </button>
 
-
     </div>
-
-  `
-
-
-  const img =
-    document.querySelector(
-      '#live-screen'
-    )
+  `;
 
 
-  const loading =
-    document.querySelector(
-      '#screen-loading'
-    )
+  // ============================================================
+  // ELEMENTS
+  // ============================================================
 
+  const screenBox =
+    document.querySelector("#screen-box");
+
+  const liveScreen =
+    document.querySelector("#live-screen");
+
+  const screenLoading =
+    document.querySelector("#screen-loading");
 
   const liveStatus =
-    document.querySelector(
-      '.live-status'
-    )
-
-
-  // ==============================
-  // VIRTUAL MOUSE ELEMENT
-  // ==============================
+    document.querySelector("#live-status");
 
   const touchpad =
-    document.querySelector(
-      '#virtual-touchpad'
-    )
+    document.querySelector("#virtual-touchpad");
+
+  const virtualCursor =
+    document.querySelector("#virtual-cursor");
 
 
-  const leftClick =
-    document.querySelector(
-      '#left-click'
-    )
+  // ============================================================
+  // VIRTUAL CURSOR POSITION
+  // ============================================================
+
+  let cursorX = 0;
+  let cursorY = 0;
+
+  let cursorInitialized = false;
 
 
-  const rightClick =
-    document.querySelector(
-      '#right-click'
-    )
+  function resetVirtualCursor() {
+
+    if (!screenBox || !virtualCursor) {
+      return;
+    }
+
+    cursorX =
+      screenBox.clientWidth / 2;
+
+    cursorY =
+      screenBox.clientHeight / 2;
+
+    cursorInitialized = true;
+
+    virtualCursor.style.left =
+      `${cursorX}px`;
+
+    virtualCursor.style.top =
+      `${cursorY}px`;
+  }
 
 
-  const doubleClick =
-    document.querySelector(
-      '#double-click'
-    )
-
-
-  const middleClick =
-    document.querySelector(
-      '#middle-click'
-    )
-
-
-  const scrollUp =
-    document.querySelector(
-      '#scroll-up'
-    )
-
-
-  const scrollDown =
-    document.querySelector(
-      '#scroll-down'
-    )
-
-
-  // ==============================
-  // TOUCHPAD
-  // ==============================
-
-  let touching = false
-
-  let lastX = 0
-
-  let lastY = 0
-
-  let moveBufferX = 0
-
-  let moveBufferY = 0
-
-  let moveTimer = null
-
-
-  function sendMouseMove() {
+  function moveVirtualCursor(
+    remoteDx,
+    remoteDy
+  ) {
 
     if (
-      moveBufferX === 0 &&
-      moveBufferY === 0
+      !screenBox ||
+      !virtualCursor
     ) {
-      return
+      return;
+    }
+
+    if (!cursorInitialized) {
+      resetVirtualCursor();
+    }
+
+
+    const imageWidth =
+      liveScreen.naturalWidth || 1920;
+
+    const imageHeight =
+      liveScreen.naturalHeight || 1080;
+
+
+    const displayedWidth =
+      liveScreen.getBoundingClientRect().width;
+
+    const displayedHeight =
+      liveScreen.getBoundingClientRect().height;
+
+
+    const scaleX =
+      displayedWidth / imageWidth;
+
+    const scaleY =
+      displayedHeight / imageHeight;
+
+
+    cursorX += remoteDx * scaleX;
+    cursorY += remoteDy * scaleY;
+
+
+    const cursorSize = 15;
+
+
+    cursorX = Math.max(
+      cursorSize,
+      Math.min(
+        screenBox.clientWidth - cursorSize,
+        cursorX
+      )
+    );
+
+
+    cursorY = Math.max(
+      cursorSize,
+      Math.min(
+        screenBox.clientHeight - cursorSize,
+        cursorY
+      )
+    );
+
+
+    virtualCursor.style.left =
+      `${cursorX}px`;
+
+    virtualCursor.style.top =
+      `${cursorY}px`;
+  }
+
+
+  resetVirtualCursor();
+
+
+  window.addEventListener(
+    "resize",
+    () => {
+
+      if (isOnPCPage) {
+        resetVirtualCursor();
+      }
+
+    }
+  );
+
+
+  // ============================================================
+  // TOUCHPAD
+  // ============================================================
+
+  let touching = false;
+
+  let lastX = 0;
+  let lastY = 0;
+
+  let moveDX = 0;
+  let moveDY = 0;
+
+  let moveTimer = null;
+
+
+  function sendBufferedMovement() {
+
+    if (
+      moveDX === 0 &&
+      moveDY === 0
+    ) {
+      return;
     }
 
 
     const dx =
-      Math.round(moveBufferX)
+      Math.round(moveDX);
 
     const dy =
-      Math.round(moveBufferY)
+      Math.round(moveDY);
 
 
-    moveBufferX = 0
-    moveBufferY = 0
+    moveDX = 0;
+    moveDY = 0;
 
 
     sendCommand(
       deviceId,
       `mouse_move_relative:${dx}:${dy}`
-    )
-
+    );
   }
 
 
   function startTouch(event) {
 
-    event.preventDefault()
+    if (
+      !event.touches ||
+      event.touches.length === 0
+    ) {
+      return;
+    }
+
+
+    event.preventDefault();
 
 
     const touch =
-      event.touches[0]
+      event.touches[0];
 
 
-    lastX =
-      touch.clientX
+    touching = true;
+
+    lastX = touch.clientX;
+    lastY = touch.clientY;
 
 
-    lastY =
-      touch.clientY
+    if (!moveTimer) {
 
+      moveTimer = setInterval(
+        sendBufferedMovement,
+        80
+      );
 
-    touching = true
-
+    }
   }
 
 
   function moveTouch(event) {
 
-    event.preventDefault()
-
-
     if (!touching) {
-      return
+      return;
     }
+
+
+    if (
+      !event.touches ||
+      event.touches.length === 0
+    ) {
+      return;
+    }
+
+
+    event.preventDefault();
 
 
     const touch =
-      event.touches[0]
+      event.touches[0];
+
+
+    const rawDX =
+      touch.clientX - lastX;
+
+    const rawDY =
+      touch.clientY - lastY;
+
+
+    lastX = touch.clientX;
+    lastY = touch.clientY;
+
+
+    const sensitivity = 2.5;
 
 
     const dx =
-      (touch.clientX - lastX) * 2.5
-
+      rawDX * sensitivity;
 
     const dy =
-      (touch.clientY - lastY) * 2.5
+      rawDY * sensitivity;
 
 
-    lastX =
-      touch.clientX
+    moveDX += dx;
+    moveDY += dy;
 
 
-    lastY =
-      touch.clientY
-
-
-    moveBufferX += dx
-
-    moveBufferY += dy
-
-
-    if (!moveTimer) {
-
-      moveTimer = setTimeout(
-        function () {
-
-          sendMouseMove()
-
-          moveTimer = null
-
-        },
-        80
-      )
-
-    }
-
+    // Update indikator cursor
+    moveVirtualCursor(
+      dx,
+      dy
+    );
   }
 
 
   function endTouch(event) {
 
-    event.preventDefault()
+    if (!touching) {
+      return;
+    }
 
-    touching = false
 
+    event.preventDefault();
+
+
+    touching = false;
+
+
+    sendBufferedMovement();
+
+
+    if (moveTimer) {
+
+      clearInterval(moveTimer);
+
+      moveTimer = null;
+
+    }
   }
 
 
   touchpad.addEventListener(
-    'touchstart',
+    "touchstart",
     startTouch,
     {
       passive: false
     }
-  )
+  );
 
 
   touchpad.addEventListener(
-    'touchmove',
+    "touchmove",
     moveTouch,
     {
       passive: false
     }
-  )
+  );
 
 
   touchpad.addEventListener(
-    'touchend',
+    "touchend",
     endTouch,
     {
       passive: false
     }
-  )
+  );
 
 
   touchpad.addEventListener(
-    'touchcancel',
+    "touchcancel",
     endTouch,
     {
       passive: false
     }
-  )
+  );
 
 
-  // ==============================
+  // ============================================================
   // MOUSE BUTTONS
-  // ==============================
+  // ============================================================
 
-  leftClick.onclick =
-    function () {
+  document
+    .querySelector("#left-click")
+    .addEventListener(
+      "click",
+      () => {
 
-      sendCommand(
-        deviceId,
-        'mouse_click:left'
-      )
+        sendCommand(
+          deviceId,
+          "mouse_click:left"
+        );
 
-    }
-
-
-  rightClick.onclick =
-    function () {
-
-      sendCommand(
-        deviceId,
-        'mouse_click:right'
-      )
-
-    }
-
-
-  doubleClick.onclick =
-    function () {
-
-      sendCommand(
-        deviceId,
-        'mouse_double_click:left'
-      )
-
-    }
-
-
-  middleClick.onclick =
-    function () {
-
-      sendCommand(
-        deviceId,
-        'mouse_click:middle'
-      )
-
-    }
-
-
-  // ==============================
-  // SCROLL
-  // ==============================
-
-  scrollUp.onclick =
-    function () {
-
-      sendCommand(
-        deviceId,
-        'scroll:5'
-      )
-
-    }
-
-
-  scrollDown.onclick =
-    function () {
-
-      sendCommand(
-        deviceId,
-        'scroll:-5'
-      )
-
-    }
-
-
-  // ==============================
-  // KEYBOARD
-  // ==============================
-
-  const keyboardInput =
-    document.querySelector(
-      '#keyboard-input'
-    )
-
-
-  let typingTimer = null
-
-
-  keyboardInput.addEventListener(
-    'input',
-    function () {
-
-      const text =
-        keyboardInput.value
-
-
-      if (!text) {
-        return
       }
-
-
-      clearTimeout(
-        typingTimer
-      )
-
-
-      typingTimer =
-        setTimeout(
-          function () {
-
-            sendCommand(
-              deviceId,
-              `type_text:${text}`
-            )
-
-
-            keyboardInput.value = ''
-
-          },
-          250
-        )
-
-    }
-  )
+    );
 
 
   document
-    .querySelectorAll(
-      '.keyboard-row button'
-    )
-    .forEach(
-      function (button) {
+    .querySelector("#right-click")
+    .addEventListener(
+      "click",
+      () => {
 
-        button.addEventListener(
-          'click',
-          function () {
-
-            const key =
-              button.dataset.key
-
-
-            sendCommand(
-              deviceId,
-              `key:${key}`
-            )
-
-          }
-        )
+        sendCommand(
+          deviceId,
+          "mouse_click:right"
+        );
 
       }
+    );
+
+
+  document
+    .querySelector("#middle-click")
+    .addEventListener(
+      "click",
+      () => {
+
+        sendCommand(
+          deviceId,
+          "mouse_click:middle"
+        );
+
+      }
+    );
+
+
+  document
+    .querySelector("#double-click")
+    .addEventListener(
+      "click",
+      () => {
+
+        sendCommand(
+          deviceId,
+          "mouse_double_click:left"
+        );
+
+      }
+    );
+
+
+  // ============================================================
+  // SCROLL
+  // ============================================================
+
+  document
+    .querySelector("#scroll-up")
+    .addEventListener(
+      "click",
+      () => {
+
+        sendCommand(
+          deviceId,
+          "scroll:5"
+        );
+
+      }
+    );
+
+
+  document
+    .querySelector("#scroll-down")
+    .addEventListener(
+      "click",
+      () => {
+
+        sendCommand(
+          deviceId,
+          "scroll:-5"
+        );
+
+      }
+    );
+
+
+  // ============================================================
+  // KEYBOARD INPUT
+  // ============================================================
+
+  const keyboardInput =
+    document.querySelector(
+      "#keyboard-input"
+    );
+
+
+  keyboardInput.addEventListener(
+    "keydown",
+    async (event) => {
+
+      if (event.key === "Enter") {
+
+        event.preventDefault();
+
+
+        const text =
+          keyboardInput.value;
+
+
+        if (text.trim() !== "") {
+
+          await sendCommand(
+            deviceId,
+            `type_text:${text}`
+          );
+
+          keyboardInput.value = "";
+
+        }
+
+      }
+
+    }
+  );
+
+
+  // ============================================================
+  // VIRTUAL KEYBOARD BUTTONS
+  // ============================================================
+
+  document
+    .querySelectorAll(
+      ".keyboard-row button"
     )
+    .forEach((button) => {
+
+      button.addEventListener(
+        "click",
+        () => {
+
+          const key =
+            button.dataset.key;
+
+
+          if (!key) {
+            return;
+          }
+
+
+          sendCommand(
+            deviceId,
+            `key:${key}`
+          );
+
+        }
+      );
+
+    });
+
+
+  // ============================================================
+  // BACK BUTTON
+  // ============================================================
+
+  document
+    .querySelector("#back-screen")
+    .addEventListener(
+      "click",
+      () => {
+
+        if (moveTimer) {
+
+          clearInterval(moveTimer);
+
+          moveTimer = null;
+
+        }
+
+
+        if (socket) {
+
+          try {
+            socket.close();
+          } catch (error) {
+            console.error(error);
+          }
+
+        }
+
+
+        window.openPC(deviceId);
+
+      }
+    );
+
+
+  // ============================================================
+  // GET LATEST CLOUDFLARE URL
+  // ============================================================
+
+  const { data: tunnelData, error: tunnelError } =
+    await supabase
+      .from("tunnel_urls")
+      .select("tunnel_url")
+      .eq("device_id", deviceId)
+      .order("created_at", {
+        ascending: false
+      })
+      .limit(1)
+      .maybeSingle();
+
+
+  if (tunnelError) {
+
+    console.error(
+      "Tunnel URL error:",
+      tunnelError
+    );
+
+    screenLoading.innerHTML = `
+      <div class="error-icon">❌</div>
+      <div>Gagal mengambil URL Cloudflare.</div>
+    `;
+
+    liveStatus.textContent =
+      "🔴 Error";
+
+    return;
+  }
+
+
+  if (
+    !tunnelData ||
+    !tunnelData.tunnel_url
+  ) {
+
+    screenLoading.innerHTML = `
+      <div class="error-icon">❌</div>
+      <div>URL Cloudflare belum tersedia.</div>
+    `;
+
+    liveStatus.textContent =
+      "🔴 Tidak tersedia";
+
+    return;
+  }
+
+
+  let tunnelURL =
+    tunnelData.tunnel_url;
+
+
+  // HTTPS → WSS
+
+  let websocketURL =
+    tunnelURL.replace(
+      /^https:/,
+      "wss:"
+    );
+
+
+  websocketURL += "/screen";
+
+
+  console.log(
+    "WebSocket:",
+    websocketURL
+  );
+
+
+  // ============================================================
+  // WEBSOCKET
+  // ============================================================
+
+  let socket;
 
 
   try {
 
-    // ==============================
-    // AMBIL CLOUDFLARE TERBARU
-    // ==============================
-
-    const {
-      data,
-      error
-    } = await supabase
-
-      .from('tunnel_urls')
-
-      .select(
-        'tunnel_url, created_at'
-      )
-
-      .eq(
-        'device_id',
-        deviceId
-      )
-
-      .order(
-        'id',
-        {
-          ascending: false
-        }
-      )
-
-      .limit(1)
-
-      .single()
-
-
-    if (error) {
-
-      throw new Error(
-        'Gagal mengambil URL PC: ' +
-        error.message
-      )
-
-    }
-
-
-    if (
-      !data ||
-      !data.tunnel_url
-    ) {
-
-      throw new Error(
-        'PC belum memiliki URL Cloudflare.'
-      )
-
-    }
-
-
-    const tunnelUrl =
-      data.tunnel_url
-
-
-    // ==============================
-    // HTTPS → WSS
-    // ==============================
-
-    const websocketUrl =
-      tunnelUrl
-        .replace(
-          /^https:\/\//,
-          'wss://'
-        ) +
-      '/screen'
-
-
-    console.log(
-      '🌐 Tunnel:',
-      tunnelUrl
-    )
-
-
-    console.log(
-      '🖥️ WebSocket:',
-      websocketUrl
-    )
-
-
-    loading.innerHTML = `
-
-      <div class="loader"></div>
-
-      <p>
-        Menghubungkan ke layar PC...
-      </p>
-
-    `
-
-
-    // ==============================
-    // WEBSOCKET
-    // ==============================
-
-    const socket =
+    socket =
       new WebSocket(
-        websocketUrl
-      )
+        websocketURL
+      );
 
 
     socket.binaryType =
-      'blob'
+      "blob";
 
 
-    // ==============================
-    // CONNECTED
-    // ==============================
+    socket.onopen = () => {
 
-    socket.onopen =
-      function () {
-
-        console.log(
-          '🟢 Terhubung ke screen server'
-        )
+      console.log(
+        "🟢 WebSocket connected"
+      );
 
 
-        liveStatus.textContent =
-          '🟢 LIVE'
+      liveStatus.textContent =
+        "🟢 LIVE";
+
+    };
 
 
-        loading.innerHTML = `
+    socket.onmessage = (event) => {
 
-          <div class="loader"></div>
-
-          <p>
-            Menunggu layar PC...
-          </p>
-
-        `
-
+      if (!(event.data instanceof Blob)) {
+        return;
       }
 
 
-    // ==============================
-    // FRAME
-    // ==============================
-
-    socket.onmessage =
-      function (event) {
-
-        const url =
-          URL.createObjectURL(
-            event.data
-          )
+      const imageURL =
+        URL.createObjectURL(
+          event.data
+        );
 
 
-        const oldUrl =
-          img.dataset.url
+      liveScreen.onload = () => {
+
+        liveScreen.style.display =
+          "block";
+
+        screenLoading.style.display =
+          "none";
 
 
-        if (oldUrl) {
+        if (!cursorInitialized) {
+          resetVirtualCursor();
+        }
+
+
+        setTimeout(() => {
 
           URL.revokeObjectURL(
-            oldUrl
-          )
+            imageURL
+          );
 
-        }
+        }, 1000);
 
-
-        img.src =
-          url
+      };
 
 
-        img.dataset.url =
-          url
+      liveScreen.src =
+        imageURL;
+
+    };
 
 
-        img.style.display =
-          'block'
+    socket.onerror = (error) => {
+
+      console.error(
+        "WebSocket error:",
+        error
+      );
 
 
-        loading.style.display =
-          'none'
-
-      }
+      liveStatus.textContent =
+        "🔴 Error";
 
 
-    // ==============================
-    // ERROR
-    // ==============================
+      screenLoading.innerHTML = `
+        <div class="error-icon">❌</div>
+        <div>Gagal terhubung ke layar PC.</div>
+      `;
 
-    socket.onerror =
-      function (error) {
-
-        console.log(
-          '❌ Gagal terhubung ke screen server',
-          error
-        )
+    };
 
 
-        liveStatus.textContent =
-          '🔴 OFFLINE'
+    socket.onclose = () => {
+
+      console.log(
+        "🔌 WebSocket disconnected"
+      );
 
 
-        loading.innerHTML = `
+      liveStatus.textContent =
+        "🔴 Terputus";
 
-          <div class="error-icon">
-            ❌
-          </div>
-
-
-          <p>
-            Gagal terhubung ke PC.
-          </p>
-
-
-          <small>
-            Pastikan PC target sedang menyala.
-          </small>
-
-        `
-
-      }
-
-
-    // ==============================
-    // CLOSE
-    // ==============================
-
-    socket.onclose =
-      function () {
-
-        console.log(
-          '🔴 Screen server terputus'
-        )
-
-
-        liveStatus.textContent =
-          '🔴 TERPUTUS'
-
-
-        if (
-          img.style.display !==
-          'block'
-        ) {
-
-          loading.innerHTML = `
-
-            <div class="error-icon">
-              🔴
-            </div>
-
-
-            <p>
-              Koneksi ke PC terputus.
-            </p>
-
-          `
-
-        }
-
-      }
-
+    };
 
   } catch (error) {
 
-    console.error(
-      error
-    )
-
+    console.error(error);
 
     liveStatus.textContent =
-      '🔴 ERROR'
-
-
-    loading.innerHTML = `
-
-      <div class="error-icon">
-        ❌
-      </div>
-
-
-      <p>
-        Gagal mengambil koneksi PC.
-      </p>
-
-
-      <small>
-        ${error.message}
-      </small>
-
-    `
+      "🔴 Error";
 
   }
+};
 
-}
+
+// ============================================================
+// SHUTDOWN PC
+// ============================================================
+
+window.shutdownPC = async function (deviceId) {
+
+  const confirmShutdown =
+    confirm(
+      "Yakin ingin mematikan PC ini?"
+    );
 
 
-// ==============================
-// SHUTDOWN
-// ==============================
+  if (!confirmShutdown) {
+    return;
+  }
 
-window.shutdownPC =
-  function (deviceId) {
+
+  const success =
+    await sendCommand(
+      deviceId,
+      "shutdown"
+    );
+
+
+  if (success) {
 
     alert(
-      '⏻ Shutdown belum dibuat.\n\n' +
-      'Device: ' +
-      deviceId
-    )
+      "⏻ Command shutdown terkirim."
+    );
 
   }
+};
 
 
-// ==============================
-// LOAD AWAL
-// ==============================
+// ============================================================
+// INITIAL LOAD
+// ============================================================
 
-loadPCs()
+loadPCs();
 
 
-// ==============================
-// AUTO REFRESH STATUS
-// ==============================
+// ============================================================
+// AUTO REFRESH PC STATUS
+// ============================================================
 
 setInterval(
-  function () {
+  () => {
 
     if (!isOnPCPage) {
-
-      loadPCs()
-
+      loadPCs();
     }
 
   },
   5000
-)
+);
