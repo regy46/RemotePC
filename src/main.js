@@ -1,12 +1,23 @@
 import { createClient } from '@supabase/supabase-js'
 import './style.css'
 
+
+// ==============================
+// SUPABASE
+// ==============================
+
 const supabase = createClient(
   import.meta.env.VITE_SUPABASE_URL,
   import.meta.env.VITE_SUPABASE_KEY
 )
 
+
 let isOnPCPage = false
+
+
+// ==============================
+// AWAL
+// ==============================
 
 document.querySelector('#app').innerHTML = `
   <div class="container">
@@ -15,116 +26,188 @@ document.querySelector('#app').innerHTML = `
   </div>
 `
 
-function getPCStatus(lastSeen) {
-  if (!lastSeen) {
-    return {
-      text: 'offline',
-      icon: '🔴'
-    }
-  }
 
-  const difference =
-    Date.now() - new Date(lastSeen).getTime()
+// ==============================
+// STATUS PC
+// ==============================
 
-  if (difference > 30000) {
+function getPCStatus(pc) {
+
+  if (pc.status === 'online') {
+
     return {
-      text: 'offline',
-      icon: '🔴'
+      text: 'online',
+      icon: '🟢'
     }
+
   }
 
   return {
-    text: 'online',
-    icon: '🟢'
+    text: 'offline',
+    icon: '🔴'
   }
 }
 
-async function loadPCs() {
-  if (isOnPCPage) return
 
-  const { data, error } = await supabase
+// ==============================
+// LOAD PC
+// ==============================
+
+async function loadPCs() {
+
+  if (isOnPCPage) {
+    return
+  }
+
+
+  const {
+    data,
+    error
+  } = await supabase
+
     .from('devices')
+
     .select('*')
-    .order('pc_name')
+
+    .order(
+      'pc_name'
+    )
+
 
   if (error) {
+
     document.querySelector('#app').innerHTML = `
+
       <div class="container">
+
         <h1>Remote PC</h1>
-        <p>❌ Gagal mengambil data PC</p>
-        <pre>${error.message}</pre>
+
+        <p>
+          ❌ Gagal mengambil data PC
+        </p>
+
+        <pre>
+${error.message}
+        </pre>
+
       </div>
+
     `
 
     return
   }
 
+
   const pcs = data.map(pc => {
 
-    const status = getPCStatus(
-      pc.last_seen
-    )
+    const status =
+      getPCStatus(pc)
+
 
     return `
+
       <div
         class="pc-card"
         onclick="openPC('${pc.device_id}')"
       >
 
         <div>
-          <h2>${pc.pc_name}</h2>
-          <p>${pc.os}</p>
+
+          <h2>
+            ${pc.pc_name}
+          </h2>
+
+          <p>
+            ${pc.os}
+          </p>
+
         </div>
 
-        <span class="status ${status.text}">
-          ${status.icon} ${status.text}
+
+        <span
+          class="status ${status.text}"
+        >
+
+          ${status.icon}
+          ${status.text}
+
         </span>
 
       </div>
+
     `
+
   }).join('')
 
+
   document.querySelector('#app').innerHTML = `
+
     <div class="container">
 
-      <h1>Remote PC</h1>
+      <h1>
+        Remote PC
+      </h1>
 
-      <p>PC yang terhubung</p>
+
+      <p>
+        PC yang terhubung
+      </p>
+
 
       <div class="pc-list">
+
         ${
           pcs ||
           '<p>Belum ada PC.</p>'
         }
+
       </div>
 
     </div>
+
   `
 }
 
+
+// ==============================
+// BUKA PC
+// ==============================
 
 window.openPC = function (deviceId) {
 
   isOnPCPage = true
 
+
   document.querySelector('#app').innerHTML = `
+
     <div class="container">
 
-      <h1>Remote PC</h1>
+
+      <h1>
+        Remote PC
+      </h1>
+
 
       <div class="pc-card">
 
         <div>
-          <h2>PC Terpilih</h2>
+
+          <h2>
+            PC Terpilih
+          </h2>
+
 
           <p>
             ID: ${deviceId}
           </p>
+
         </div>
 
       </div>
 
+
       <div class="controls">
+
 
         <button
           onclick="pingPC('${deviceId}')"
@@ -132,11 +215,13 @@ window.openPC = function (deviceId) {
           🏓 Ping PC
         </button>
 
+
         <button
           onclick="viewScreen('${deviceId}')"
         >
           🖥️ Lihat Layar
         </button>
+
 
         <button
           onclick="shutdownPC('${deviceId}')"
@@ -144,7 +229,9 @@ window.openPC = function (deviceId) {
           ⏻ Shutdown
         </button>
 
+
       </div>
+
 
       <button
         class="back-button"
@@ -153,10 +240,16 @@ window.openPC = function (deviceId) {
         ← Kembali
       </button>
 
+
     </div>
+
   `
 }
 
+
+// ==============================
+// KEMBALI
+// ==============================
 
 window.backToPCList = function () {
 
@@ -166,15 +259,28 @@ window.backToPCList = function () {
 }
 
 
+// ==============================
+// PING PC
+// ==============================
+
 window.pingPC = async function (deviceId) {
 
-  const { error } = await supabase
+  const {
+    error
+  } = await supabase
+
     .from('commands')
+
     .insert({
+
       device_id: deviceId,
+
       command: 'ping',
+
       status: 'pending'
+
     })
+
 
   if (error) {
 
@@ -186,38 +292,68 @@ window.pingPC = async function (deviceId) {
     return
   }
 
+
   alert(
     '🏓 Ping berhasil dikirim!'
   )
 }
 
 
+// ==============================
+// LIHAT LAYAR
+// ==============================
+
 window.viewScreen = async function (deviceId) {
 
-  document.querySelector('#app').innerHTML = `
-    <div class="container screen-page">
 
-      <div class="screen-header">
+  document.querySelector('#app').innerHTML = `
+
+    <div
+      class="container screen-page"
+    >
+
+
+      <div
+        class="screen-header"
+      >
 
         <div>
-          <h1>🖥️ Lihat Layar</h1>
+
+          <h1>
+            🖥️ Lihat Layar
+          </h1>
+
 
           <p>
             Menampilkan layar PC secara langsung
           </p>
+
         </div>
 
-        <span class="live-status">
+
+        <span
+          class="live-status"
+        >
           🟡 CONNECTING
         </span>
 
+
       </div>
 
-      <div class="screen-box">
 
-        <div id="screen-loading">
+      <div
+        class="screen-box"
+      >
 
-          <div class="loader"></div>
+
+        <div
+          id="screen-loading"
+        >
+
+          <div
+            class="loader"
+          ></div>
+
 
           <p>
             Mengambil alamat PC...
@@ -225,12 +361,15 @@ window.viewScreen = async function (deviceId) {
 
         </div>
 
+
         <img
           id="live-screen"
           alt="Layar PC"
         >
 
+
       </div>
+
 
       <button
         class="back-button"
@@ -239,7 +378,9 @@ window.viewScreen = async function (deviceId) {
         ← Kembali
       </button>
 
+
     </div>
+
   `
 
 
@@ -248,10 +389,12 @@ window.viewScreen = async function (deviceId) {
       '#live-screen'
     )
 
+
   const loading =
     document.querySelector(
       '#screen-loading'
     )
+
 
   const liveStatus =
     document.querySelector(
@@ -261,10 +404,10 @@ window.viewScreen = async function (deviceId) {
 
   try {
 
-    /*
-      Ambil URL Cloudflare TERBARU
-      khusus untuk PC yang dipilih.
-    */
+
+    // ==============================
+    // AMBIL URL CLOUDFLARE TERBARU
+    // ==============================
 
     const {
       data,
@@ -320,17 +463,12 @@ window.viewScreen = async function (deviceId) {
       data.tunnel_url
 
 
-    /*
-      Contoh:
-
-      https://abc.trycloudflare.com
-
-      menjadi:
-
-      wss://abc.trycloudflare.com/screen
-    */
+    // ==============================
+    // HTTPS → WSS
+    // ==============================
 
     const websocketUrl =
+
       tunnelUrl
         .replace(
           /^https:\/\//,
@@ -344,6 +482,7 @@ window.viewScreen = async function (deviceId) {
       tunnelUrl
     )
 
+
     console.log(
       '🖥️ WebSocket:',
       websocketUrl
@@ -351,13 +490,22 @@ window.viewScreen = async function (deviceId) {
 
 
     loading.innerHTML = `
-      <div class="loader"></div>
+
+      <div
+        class="loader"
+      ></div>
+
 
       <p>
         Menghubungkan ke layar PC...
       </p>
+
     `
 
+
+    // ==============================
+    // WEBSOCKET
+    // ==============================
 
     const socket =
       new WebSocket(
@@ -368,6 +516,10 @@ window.viewScreen = async function (deviceId) {
     socket.binaryType =
       'blob'
 
+
+    // ==============================
+    // CONNECTED
+    // ==============================
 
     socket.onopen = function () {
 
@@ -381,17 +533,27 @@ window.viewScreen = async function (deviceId) {
 
 
       loading.innerHTML = `
-        <div class="loader"></div>
+
+        <div
+          class="loader"
+        ></div>
+
 
         <p>
           Menunggu layar PC...
         </p>
+
       `
     }
 
 
+    // ==============================
+    // FRAME
+    // ==============================
+
     socket.onmessage =
       function (event) {
+
 
         const url =
           URL.createObjectURL(
@@ -412,21 +574,32 @@ window.viewScreen = async function (deviceId) {
         }
 
 
-        img.src = url
+        img.src =
+          url
+
 
         img.dataset.url =
           url
 
+
         img.style.display =
           'block'
 
+
         loading.style.display =
           'none'
+
+
       }
 
 
+    // ==============================
+    // ERROR
+    // ==============================
+
     socket.onerror =
       function (error) {
+
 
         console.log(
           '❌ Gagal terhubung ke screen server',
@@ -439,23 +612,35 @@ window.viewScreen = async function (deviceId) {
 
 
         loading.innerHTML = `
-          <div class="error-icon">
+
+          <div
+            class="error-icon"
+          >
             ❌
           </div>
+
 
           <p>
             Gagal terhubung ke PC.
           </p>
 
+
           <small>
             Pastikan PC target sedang menyala.
           </small>
+
         `
+
       }
 
 
+    // ==============================
+    // CLOSE
+    // ==============================
+
     socket.onclose =
       function () {
+
 
         console.log(
           '🔴 Screen server terputus'
@@ -471,20 +656,29 @@ window.viewScreen = async function (deviceId) {
           'block'
         ) {
 
+
           loading.innerHTML = `
-            <div class="error-icon">
+
+            <div
+              class="error-icon"
+            >
               🔴
             </div>
+
 
             <p>
               Koneksi ke PC terputus.
             </p>
+
           `
+
         }
+
       }
 
 
   } catch (error) {
+
 
     console.error(
       error
@@ -496,21 +690,33 @@ window.viewScreen = async function (deviceId) {
 
 
     loading.innerHTML = `
-      <div class="error-icon">
+
+      <div
+        class="error-icon"
+      >
         ❌
       </div>
+
 
       <p>
         Gagal mengambil koneksi PC.
       </p>
 
+
       <small>
         ${error.message}
       </small>
+
     `
+
   }
+
 }
 
+
+// ==============================
+// SHUTDOWN
+// ==============================
 
 window.shutdownPC =
   function (deviceId) {
@@ -519,8 +725,31 @@ window.shutdownPC =
       '⏻ Shutdown belum dibuat.\n\n' +
       'Device: ' +
       deviceId
-    )``
+    )
+
   }
 
 
+// ==============================
+// LOAD AWAL
+// ==============================
+
 loadPCs()
+
+
+// ==============================
+// AUTO REFRESH STATUS
+// ==============================
+
+setInterval(
+  function () {
+
+    if (!isOnPCPage) {
+
+      loadPCs()
+
+    }
+
+  },
+  5000
+)
