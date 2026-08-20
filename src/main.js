@@ -441,6 +441,7 @@ window.viewScreen =
           <img
             id="live-screen"
             alt="Live Screen"
+            draggable="false"
           />
 
           <!-- VIRTUAL CURSOR -->
@@ -713,6 +714,23 @@ window.viewScreen =
       );
 
     // ========================================================
+    // SCREEN INTERACTION SETTINGS
+    //
+    // Pointer ditangkap oleh screenBox.
+    // Ini membuat cursor tetap bisa digerakkan walaupun
+    // gambar live screen mempunyai masalah pointer-events.
+    // ========================================================
+
+    screenBox.style.touchAction = "none";
+    screenBox.style.userSelect = "none";
+
+    liveScreen.style.userSelect = "none";
+    liveScreen.style.webkitUserSelect = "none";
+    liveScreen.style.webkitTouchCallout = "none";
+
+    virtualCursor.style.pointerEvents = "none";
+
+    // ========================================================
     // VIRTUAL CURSOR
     // ========================================================
 
@@ -728,6 +746,14 @@ window.viewScreen =
 
       const boxRect =
         screenBox.getBoundingClientRect();
+
+      if (
+        imageRect.width <= 0 ||
+        imageRect.height <= 0
+      ) {
+
+        return;
+      }
 
       cursorX =
         imageRect.left -
@@ -753,20 +779,42 @@ window.viewScreen =
       y
     ) {
 
+      const imageRect =
+        liveScreen.getBoundingClientRect();
+
+      const boxRect =
+        screenBox.getBoundingClientRect();
+
+      const minX =
+        imageRect.left -
+        boxRect.left;
+
+      const minY =
+        imageRect.top -
+        boxRect.top;
+
+      const maxX =
+        minX +
+        imageRect.width;
+
+      const maxY =
+        minY +
+        imageRect.height;
+
       cursorX =
         Math.max(
-          0,
+          minX,
           Math.min(
-            screenBox.clientWidth,
+            maxX,
             x
           )
         );
 
       cursorY =
         Math.max(
-          0,
+          minY,
           Math.min(
-            screenBox.clientHeight,
+            maxY,
             y
           )
         );
@@ -779,9 +827,7 @@ window.viewScreen =
     }
 
     // ========================================================
-    // VIRTUAL CURSOR → WINDOWS COORDINATE
-    //
-    // HANYA dipanggil ketika tombol klik ditekan.
+    // GET VIRTUAL CURSOR WINDOWS COORDINATES
     // ========================================================
 
     function getVirtualCursorWindowsCoordinates() {
@@ -863,7 +909,9 @@ window.viewScreen =
     //
     // PENTING:
     // TIDAK ADA sendCommand DI SINI.
-    // Jadi mouse Windows tidak bergerak.
+    //
+    // Jadi gerakan cursor biru TIDAK menggerakkan
+    // mouse Windows.
     // ========================================================
 
     function updateVirtualCursor(
@@ -876,6 +924,14 @@ window.viewScreen =
 
       const boxRect =
         screenBox.getBoundingClientRect();
+
+      if (
+        imageRect.width <= 0 ||
+        imageRect.height <= 0
+      ) {
+
+        return;
+      }
 
       let localX =
         clientX -
@@ -903,14 +959,19 @@ window.viewScreen =
           )
         );
 
-      setCursorPosition(
+      const newX =
         imageRect.left -
-          boxRect.left +
-          localX,
+        boxRect.left +
+        localX;
 
+      const newY =
         imageRect.top -
-          boxRect.top +
-          localY
+        boxRect.top +
+        localY;
+
+      setCursorPosition(
+        newX,
+        newY
       );
     }
 
@@ -933,19 +994,34 @@ window.viewScreen =
     // ========================================================
     // SCREEN POINTER
     //
-    // INI CUMA MENGGERAKKAN CURSOR BIRU.
-    // TIDAK MENGIRIM mouse_move_to.
+    // PERBAIKAN UTAMA:
+    // Event sekarang ditangkap oleh screenBox.
+    //
+    // TIDAK ADA sendCommand DI SINI.
     // ========================================================
 
     let screenDragging = false;
 
-    liveScreen.addEventListener(
+    screenBox.addEventListener(
       "pointerdown",
       (event) => {
 
+        if (
+          event.target.closest?.(
+            "button"
+          )
+        ) {
+
+          return;
+        }
+
         event.preventDefault();
 
-        if (!liveScreen.complete) {
+        if (
+          liveScreen.naturalWidth <= 0 ||
+          liveScreen.naturalHeight <= 0
+        ) {
+
           return;
         }
 
@@ -953,7 +1029,7 @@ window.viewScreen =
 
         try {
 
-          liveScreen.setPointerCapture?.(
+          screenBox.setPointerCapture(
             event.pointerId
           );
 
@@ -968,7 +1044,7 @@ window.viewScreen =
       }
     );
 
-    liveScreen.addEventListener(
+    screenBox.addEventListener(
       "pointermove",
       (event) => {
 
@@ -985,7 +1061,7 @@ window.viewScreen =
       }
     );
 
-    liveScreen.addEventListener(
+    screenBox.addEventListener(
       "pointerup",
       (event) => {
 
@@ -993,7 +1069,7 @@ window.viewScreen =
 
         try {
 
-          liveScreen.releasePointerCapture?.(
+          screenBox.releasePointerCapture(
             event.pointerId
           );
 
@@ -1003,11 +1079,21 @@ window.viewScreen =
       }
     );
 
-    liveScreen.addEventListener(
+    screenBox.addEventListener(
       "pointercancel",
       () => {
 
         screenDragging = false;
+
+      }
+    );
+
+    screenBox.addEventListener(
+      "pointerleave",
+      () => {
+
+        // Jangan menghilangkan cursor.
+        // Cursor tetap berada di posisi terakhir.
 
       }
     );
@@ -1026,6 +1112,12 @@ window.viewScreen =
 
           const coords =
             getVirtualCursorWindowsCoordinates();
+
+          console.log(
+            "🖱️ Virtual Left Click:",
+            coords.x,
+            coords.y
+          );
 
           await sendCommand(
             deviceId,
@@ -1050,6 +1142,12 @@ window.viewScreen =
           const coords =
             getVirtualCursorWindowsCoordinates();
 
+          console.log(
+            "🖱️ Virtual Right Click:",
+            coords.x,
+            coords.y
+          );
+
           await sendCommand(
             deviceId,
             `mouse_click_at:${coords.x}:${coords.y}:right`
@@ -1073,6 +1171,12 @@ window.viewScreen =
           const coords =
             getVirtualCursorWindowsCoordinates();
 
+          console.log(
+            "🖱️ Virtual Middle Click:",
+            coords.x,
+            coords.y
+          );
+
           await sendCommand(
             deviceId,
             `mouse_click_at:${coords.x}:${coords.y}:middle`
@@ -1095,6 +1199,12 @@ window.viewScreen =
 
           const coords =
             getVirtualCursorWindowsCoordinates();
+
+          console.log(
+            "🖱️ Virtual Double Click:",
+            coords.x,
+            coords.y
+          );
 
           await sendCommand(
             deviceId,
@@ -1543,12 +1653,6 @@ window.viewScreen =
 
               screenLoading.style.display =
                 "none";
-
-              if (!cursorReady) {
-
-                resetCursor();
-
-              }
 
               resetCursorWhenReady();
 
